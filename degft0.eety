@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>決勝時刻®: M 戰術情報總部 | COD: Mobile Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Radar Stats -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Orbitron & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cod: {
+                            gold: '#FFC700',
+                            goldDark: '#CC9F00',
+                            bg: '#0F1215',
+                            card: '#161B22',
+                            panel: '#1F2630',
+                            accent: '#00E5FF',
+                            danger: '#FF3B30'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Noto Sans TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F1215;
+            color: #E2E8F0;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphic Tactical UI */
+        .glass-panel {
+            background: rgba(22, 27, 34, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 199, 0, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-panel-active {
+            border-color: #FFC700;
+            box-shadow: 0 0 15px rgba(255, 199, 0, 0.3);
+        }
+
+        /* Tactical HUD Border Corners */
+        .hud-box {
+            position: relative;
+        }
+        .hud-box::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; width: 10px; height: 10px;
+            border-top: 2px solid #FFC700;
+            border-left: 2px solid #FFC700;
+        }
+        .hud-box::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; right: -2px; width: 10px; height: 10px;
+            border-bottom: 2px solid #FFC700;
+            border-right: 2px solid #FFC700;
+        }
+
+        /* Grid Pattern Background Overlay */
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, rgba(255, 199, 0, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 199, 0, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Glow Text Effect */
+        .text-glow {
+            text-shadow: 0 0 10px rgba(255, 199, 0, 0.6);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+        }
+
+        /* Scanline Animation */
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 229, 255, 0.3);
+            position: absolute;
+            z-index: 10;
+            animation: moveScanline 6s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes moveScanline {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F1215;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFC700;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-grid-pattern min-h-screen flex flex-col selection:bg-cod-gold selection:text-black">
+
+    <!-- Scanline HUD effect -->
+    <div class="scanline"></div>
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-cod-gold/20 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+                <div class="w-10 h-10 bg-cod-gold text-black font-orbitron font-black text-xl flex items-center justify-center rounded transform -skew-x-12 shadow-[0_0_15px_rgba(255,199,0,0.5)]">
+                    COD
+                </div>
+                <div>
+                    <h1 class="font-orbitron font-extrabold text-lg tracking-wider text-white flex items-center">
+                        決勝時刻<span class="text-cod-gold ml-1">M</span>
+                    </h1>
+                    <p class="text-[10px] text-gray-400 tracking-widest font-mono">TACTICAL HUB v4.8</p>
+                </div>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-8 font-medium text-sm tracking-wide">
+                <a href="#gunsmith" class="hover:text-cod-gold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-crosshairs text-cod-gold text-xs"></i><span>槍匠系統</span>
+                </a>
+                <a href="#maps" class="hover:text-cod-gold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-map-location-dot text-cod-gold text-xs"></i><span>地圖指南</span>
+                </a>
+                <a href="#season" class="hover:text-cod-gold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-trophy text-cod-gold text-xs"></i><span>賽季賽事</span>
+                </a>
+                <a href="#scorestreaks" class="hover:text-cod-gold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-jet-fighter text-cod-gold text-xs"></i><span>連殺與專家</span>
+                </a>
+                <a href="#tierlist" class="hover:text-cod-gold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-list-ol text-cod-gold text-xs"></i><span>Meta 強度榜</span>
+                </a>
+            </nav>
+
+            <!-- Audio Toggle & Action Button -->
+            <div class="flex items-center space-x-4">
+                <button id="sfx-toggle" onclick="toggleSFX()" class="p-2 text-gray-400 hover:text-cod-gold transition glass-panel rounded border-cod-gold/30 flex items-center space-x-1 text-xs">
+                    <i id="sfx-icon" class="fa-solid fa-volume-high text-cod-gold"></i>
+                    <span class="hidden sm:inline font-mono">SFX: ON</span>
+                </button>
+                <a href="#gunsmith" class="bg-cod-gold hover:bg-yellow-400 text-black font-bold text-xs uppercase px-4 py-2.5 rounded transform -skew-x-6 transition shadow-[0_0_15px_rgba(255,199,0,0.4)] flex items-center space-x-1">
+                    <span>開始組槍</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow">
+        
+        <!-- SECTION 1: HERO BANNER -->
+        <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 px-4">
+            <!-- Background FX -->
+            <div class="absolute inset-0 bg-gradient-to-t from-cod-bg via-transparent to-cod-bg/80 z-10"></div>
+            <div class="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center filter grayscale contrast-150"></div>
+            
+            <!-- Animated Particle Effect (CSS/HTML Glow points) -->
+            <div class="absolute w-96 h-96 bg-cod-gold/10 rounded-full blur-3xl -top-10 -left-10 animate-pulse"></div>
+            <div class="absolute w-96 h-96 bg-cod-accent/10 rounded-full blur-3xl -bottom-10 -right-10 animate-pulse"></div>
+
+            <div class="relative z-20 max-w-5xl mx-auto text-center space-y-8">
+                <!-- Tactical HUD Tag -->
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-cod-gold/10 border border-cod-gold/40 text-cod-gold font-mono text-xs uppercase tracking-widest hud-box">
+                    <span class="w-2 h-2 rounded-full bg-cod-gold animate-ping"></span>
+                    <span>SEASON 8: DARK TACTICS ONLINE</span>
+                </div>
+
+                <!-- Main Headline -->
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-orbitron font-black text-white tracking-tight uppercase leading-none">
+                    掌握戰場 <br class="hidden sm:inline"/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cod-gold via-yellow-200 to-cod-gold text-glow">
+                        主宰每一場勝利
+                    </span>
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="max-w-2xl mx-auto text-gray-300 text-sm sm:text-base leading-relaxed">
+                    歡迎來到《決勝時刻®: M》玩家戰術指揮中心。探索最新的槍匠配置、地圖戰術導覽、賽季情報與版本權威 Meta 武器強度榜！
+                </p>
+
+                <!-- Hero CTA Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                    <a href="https://callofduty.garena.tw/" target="_blank" onclick="playClickSound()" class="w-full sm:w-auto px-8 py-4 bg-cod-gold hover:bg-yellow-400 text-black font-orbitron font-black text-base uppercase rounded-md shadow-[0_0_25px_rgba(255,199,0,0.5)] transform hover:-translate-y-0.5 transition flex items-center justify-center space-x-3 border-2 border-yellow-300">
+                        <i class="fa-solid fa-download text-lg"></i>
+                        <span>下載遊戲 (官方)</span>
+                    </a>
+                    <a href="#gunsmith" onclick="playClickSound()" class="w-full sm:w-auto px-8 py-4 glass-panel hover:bg-cod-gold/20 text-white font-orbitron font-bold text-base uppercase rounded-md border border-cod-gold/50 transform hover:-translate-y-0.5 transition flex items-center justify-center space-x-3">
+                        <i class="fa-solid fa-sliders text-cod-gold"></i>
+                        <span>武器槍匠模擬器</span>
+                    </a>
+                </div>
+
+                <!-- Live Quick Stats Banner -->
+                <div class="pt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                    <div class="glass-panel p-4 rounded-lg text-center hud-box">
+                        <p class="text-xs text-gray-400 font-mono">活躍玩家總計</p>
+                        <p class="text-2xl font-orbitron font-extrabold text-cod-gold">500,000+</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-lg text-center hud-box">
+                        <p class="text-xs text-gray-400 font-mono">當前戰場地圖</p>
+                        <p class="text-2xl font-orbitron font-extrabold text-white">45+</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-lg text-center hud-box">
+                        <p class="text-xs text-gray-400 font-mono">可自訂槍械</p>
+                        <p class="text-2xl font-orbitron font-extrabold text-cod-gold">100+</p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-lg text-center hud-box">
+                        <p class="text-xs text-gray-400 font-mono">世界大賽獎金</p>
+                        <p class="text-2xl font-orbitron font-extrabold text-cod-accent">$1,000,000</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: WEAPONS & GUNSMITH BUILDER -->
+        <section id="gunsmith" class="py-16 px-4 max-w-7xl mx-auto relative">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 border-b border-cod-gold/20 pb-4">
+                <div>
+                    <span class="text-cod-gold font-mono text-xs uppercase tracking-widest">// WEAPON CUSTOMIZATION</span>
+                    <h2 class="text-3xl font-orbitron font-black text-white text-glow">武器與槍匠系統 (Gunsmith)</h2>
+                </div>
+                <p class="text-gray-400 text-xs mt-2 md:mt-0 font-mono">配置專屬配件，實時試算威力、射速與機動性數值變化</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Panel: Weapon Selection -->
+                <div class="lg:col-span-4 space-y-3">
+                    <h3 class="text-sm font-bold text-gray-300 uppercase font-mono tracking-wider mb-2">選擇熱門槍械</h3>
+                    <div id="weapon-list" class="space-y-2">
+                        <!-- Dynamic Weapon Buttons rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Middle/Right Panel: Gunsmith Interactive Workbench -->
+                <div class="lg:col-span-8 glass-panel rounded-xl p-6 relative hud-box flex flex-col justify-between">
+                    <div>
+                        <!-- Weapon Header Info -->
+                        <div class="flex justify-between items-start border-b border-gray-700/60 pb-4">
+                            <div>
+                                <span id="gun-type-badge" class="px-2 py-0.5 text-[10px] font-mono rounded bg-cod-gold text-black font-bold">衝鋒槍 (SMG)</span>
+                                <h3 id="gun-title" class="text-3xl font-orbitron font-extrabold text-white mt-1">Fennec</h3>
+                                <p id="gun-desc" class="text-xs text-gray-400 mt-1">極高射速的近距離霸主，擁有極強的爆發殺傷力。</p>
+                            </div>
+                            <button onclick="resetGunsmith()" class="text-xs font-mono text-gray-400 hover:text-cod-gold transition flex items-center space-x-1 glass-panel px-3 py-1.5 rounded">
+                                <i class="fa-solid fa-rotate-left"></i><span>重置配件</span>
+                            </button>
+                        </div>
+
+                        <!-- Main Canvas / Radar Chart + Stats Row -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 items-center">
+                            <!-- Left: Stats Radar Chart -->
+                            <div class="relative w-full h-56 flex items-center justify-center">
+                                <canvas id="statsRadarChart"></canvas>
+                            </div>
+
+                            <!-- Right: Stat Bars Grid -->
+                            <div class="space-y-2 text-xs font-mono">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">傷害 (Damage)</span>
+                                        <span id="stat-val-damage" class="font-bold text-cod-gold">25</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-damage" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">準確度 (Accuracy)</span>
+                                        <span id="stat-val-accuracy" class="font-bold text-cod-gold">42</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-accuracy" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 42%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">射程 (Range)</span>
+                                        <span id="stat-val-range" class="font-bold text-cod-gold">40</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-range" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">射速 (Fire Rate)</span>
+                                        <span id="stat-val-firerate" class="font-bold text-cod-gold">111</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-firerate" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">機動性 (Mobility)</span>
+                                        <span id="stat-val-mobility" class="font-bold text-cod-gold">88</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-mobility" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 88%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-400">控制力 (Control)</span>
+                                        <span id="stat-val-control" class="font-bold text-cod-gold">38</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-control" class="bg-cod-gold h-2 rounded-full transition-all duration-300" style="width: 38%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attachments Selectors Grid -->
+                        <div class="mt-4 pt-4 border-t border-gray-700/60">
+                            <h4 class="text-xs font-mono uppercase text-cod-accent mb-3 flex items-center">
+                                <i class="fa-solid fa-wrench mr-2"></i>槍匠改裝配件選單 (Attachments)
+                            </h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="attachment-slots">
+                                <!-- Slots rendered via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Share Code Output -->
+                    <div class="mt-6 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center space-x-2 text-xs font-mono text-gray-300 w-full sm:w-auto">
+                            <span class="text-cod-gold font-bold">配件分享碼:</span>
+                            <code id="share-code" class="bg-black/60 px-3 py-1 rounded border border-cod-gold/30 text-cod-accent font-mono text-xs select-all">
+                                COD-FEN-8921-X
+                            </code>
+                        </div>
+                        <button onclick="copyShareCode()" class="w-full sm:w-auto bg-cod-gold/20 hover:bg-cod-gold text-cod-gold hover:text-black border border-cod-gold/50 px-4 py-1.5 rounded text-xs font-mono transition flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-copy"></i><span>複製戰術碼</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 3: MAPS GUIDE -->
+        <section id="maps" class="py-16 px-4 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 border-b border-cod-gold/20 pb-4">
+                <div>
+                    <span class="text-cod-gold font-mono text-xs uppercase tracking-widest">// TACTICAL MAP DATABASE</span>
+                    <h2 class="text-3xl font-orbitron font-black text-white text-glow">戰術地圖圖鑑與指南</h2>
+                </div>
+                <!-- Filter Tabs -->
+                <div class="flex space-x-2 mt-4 md:mt-0 font-mono text-xs" id="map-filters">
+                    <button onclick="filterMaps('all')" class="map-filter-btn px-3 py-1.5 rounded glass-panel text-cod-gold border-cod-gold">全部</button>
+                    <button onclick="filterMaps('MP')" class="map-filter-btn px-3 py-1.5 rounded glass-panel text-gray-400">多人對戰 (MP)</button>
+                    <button onclick="filterMaps('BR')" class="map-filter-btn px-3 py-1.5 rounded glass-panel text-gray-400">生存模式 (BR)</button>
+                </div>
+            </div>
+
+            <!-- Map Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="maps-grid">
+                <!-- Map items injected via JavaScript -->
+            </div>
+        </section>
+
+
+        <!-- SECTION 4: CURRENT SEASON & EVENTS -->
+        <section id="season" class="py-16 px-4 max-w-7xl mx-auto">
+            <div class="glass-panel p-6 lg:p-10 rounded-2xl border border-cod-gold/30 relative overflow-hidden hud-box">
+                <!-- Background Accent Glow -->
+                <div class="absolute top-0 right-0 w-80 h-80 bg-cod-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Season Info Left -->
+                    <div class="lg:col-span-7 space-y-5">
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-cod-gold/20 text-cod-gold font-mono text-xs border border-cod-gold/40">
+                            <i class="fa-solid fa-fire text-xs"></i>
+                            <span>SEASON 8: 暗影刺客 (SHADOW TACTICS)</span>
+                        </div>
+
+                        <h2 class="text-3xl sm:text-5xl font-orbitron font-black text-white uppercase leading-tight">
+                            全新戰鬥通行證與 <br>
+                            <span class="text-cod-gold text-glow">世界錦標賽賽事</span>
+                        </h2>
+
+                        <p class="text-gray-300 text-sm leading-relaxed">
+                            賽季 8 正式開跑！解鎖全新特戰兵「影子小隊」、史詩級武器藍圖，並同步開起全球總決賽觀賽獎勵活動。
+                        </p>
+
+                        <!-- Event Countdown Timer -->
+                        <div class="p-4 bg-cod-bg/80 rounded-xl border border-cod-gold/20 font-mono">
+                            <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider flex items-center">
+                                <i class="fa-regular fa-clock mr-2 text-cod-gold"></i>距離賽季結算倒數時間:
+                            </p>
+                            <div class="grid grid-cols-4 gap-2 text-center">
+                                <div class="bg-cod-card p-2 rounded">
+                                    <span id="timer-days" class="text-xl sm:text-2xl font-bold font-orbitron text-cod-gold">14</span>
+                                    <p class="text-[10px] text-gray-400">天 (DAYS)</p>
+                                </div>
+                                <div class="bg-cod-card p-2 rounded">
+                                    <span id="timer-hours" class="text-xl sm:text-2xl font-bold font-orbitron text-white">08</span>
+                                    <p class="text-[10px] text-gray-400">時 (HOURS)</p>
+                                </div>
+                                <div class="bg-cod-card p-2 rounded">
+                                    <span id="timer-mins" class="text-xl sm:text-2xl font-bold font-orbitron text-white">45</span>
+                                    <p class="text-[10px] text-gray-400">分 (MINS)</p>
+                                </div>
+                                <div class="bg-cod-card p-2 rounded">
+                                    <span id="timer-secs" class="text-xl sm:text-2xl font-bold font-orbitron text-cod-accent">30</span>
+                                    <p class="text-[10px] text-gray-400">秒 (SECS)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Battle Pass Tier Showcase items -->
+                        <div>
+                            <p class="text-xs font-mono text-gray-400 uppercase mb-2">本季核心獎勵預覽:</p>
+                            <div class="flex space-x-3">
+                                <div class="flex items-center space-x-2 bg-cod-card/80 px-3 py-2 rounded border border-gray-700 text-xs">
+                                    <i class="fa-solid fa-user-ninja text-cod-gold"></i>
+                                    <span>角色: 幽靈 - 匿影</span>
+                                </div>
+                                <div class="flex items-center space-x-2 bg-cod-card/80 px-3 py-2 rounded border border-gray-700 text-xs">
+                                    <i class="fa-solid fa-gun text-cod-accent"></i>
+                                    <span>藍圖: M4 - 暗黑騎士</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Esports World Championship Card Right -->
+                    <div class="lg:col-span-5 glass-panel p-6 rounded-xl border border-cod-gold/40 text-center space-y-4">
+                        <div class="w-16 h-16 bg-cod-gold/20 text-cod-gold rounded-full flex items-center justify-center mx-auto text-2xl border border-cod-gold/50 shadow-[0_0_15px_rgba(255,199,0,0.3)]">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <h3 class="text-xl font-orbitron font-bold text-white">WORLD CHAMPIONSHIP 2026</h3>
+                        <p class="text-xs text-gray-300">總獎金高達 $1,000,000 美金！線上觀看轉播即刻領取限定槍械迷彩與 CP 獎勵點數。</p>
+                        
+                        <div class="pt-2">
+                            <a href="https://www.youtube.com/@CoDMobile" target="_blank" onclick="playClickSound()" class="inline-block w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase rounded transition font-mono shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                                <i class="fa-brands fa-youtube mr-2"></i>前往賽事直播頻道
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 5: SCORESTREAKS & OPERATOR SKILLS -->
+        <section id="scorestreaks" class="py-16 px-4 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 border-b border-cod-gold/20 pb-4">
+                <div>
+                    <span class="text-cod-gold font-mono text-xs uppercase tracking-widest">// TACTICAL ARSENAL</span>
+                    <h2 class="text-3xl font-orbitron font-black text-white text-glow">連殺獎勵與專家技能 (Scorestreaks & Skills)</h2>
+                </div>
+                <p class="text-gray-400 text-xs font-mono">點擊觸發戰術音效與技能啟動模擬</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="streaks-container">
+                <!-- Dynamic Scorestreak items rendered via JS -->
+            </div>
+        </section>
+
+
+        <!-- SECTION 6: COMMUNITY META TIER LIST -->
+        <section id="tierlist" class="py-16 px-4 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 border-b border-cod-gold/20 pb-4">
+                <div>
+                    <span class="text-cod-gold font-mono text-xs uppercase tracking-widest">// SEASON META RANKING</span>
+                    <h2 class="text-3xl font-orbitron font-black text-white text-glow">版本槍械 Tier List (強度榜)</h2>
+                </div>
+                
+                <!-- Category Filter Buttons -->
+                <div class="flex flex-wrap gap-2 mt-4 md:mt-0 font-mono text-xs" id="tier-category-filters">
+                    <button onclick="filterTier('ALL')" class="tier-cat-btn px-3 py-1.5 rounded glass-panel text-cod-gold border-cod-gold">全部</button>
+                    <button onclick="filterTier('AR')" class="tier-cat-btn px-3 py-1.5 rounded glass-panel text-gray-400">突擊步槍 (AR)</button>
+                    <button onclick="filterTier('SMG')" class="tier-cat-btn px-3 py-1.5 rounded glass-panel text-gray-400">衝鋒槍 (SMG)</button>
+                    <button onclick="filterTier('SNIPER')" class="tier-cat-btn px-3 py-1.5 rounded glass-panel text-gray-400">狙擊槍 (Sniper)</button>
+                    <button onclick="filterTier('LMG')" class="tier-cat-btn px-3 py-1.5 rounded glass-panel text-gray-400">輕機槍 (LMG)</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- S Tier -->
+                <div class="glass-panel rounded-xl p-4 border-l-4 border-l-red-500 flex flex-col md:flex-row items-start md:items-center gap-4">
+                    <div class="w-24 h-16 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg flex flex-col items-center justify-center font-orbitron font-black text-2xl flex-shrink-0">
+                        S TIER
+                        <span class="text-[9px] font-mono font-normal text-red-300">T0 絕對王者</span>
+                    </div>
+                    <div class="flex-grow flex flex-wrap gap-3" id="tier-s-container">
+                        <!-- S Tier Guns rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- A Tier -->
+                <div class="glass-panel rounded-xl p-4 border-l-4 border-l-cod-gold flex flex-col md:flex-row items-start md:items-center gap-4">
+                    <div class="w-24 h-16 bg-cod-gold/20 text-cod-gold border border-cod-gold/50 rounded-lg flex flex-col items-center justify-center font-orbitron font-black text-2xl flex-shrink-0">
+                        A TIER
+                        <span class="text-[9px] font-mono font-normal text-yellow-300">T1 強力主流</span>
+                    </div>
+                    <div class="flex-grow flex flex-wrap gap-3" id="tier-a-container">
+                        <!-- A Tier Guns rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- B Tier -->
+                <div class="glass-panel rounded-xl p-4 border-l-4 border-l-blue-500 flex flex-col md:flex-row items-start md:items-center gap-4">
+                    <div class="w-24 h-16 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded-lg flex flex-col items-center justify-center font-orbitron font-black text-2xl flex-shrink-0">
+                        B TIER
+                        <span class="text-[9px] font-mono font-normal text-blue-300">T2 特殊對策</span>
+                    </div>
+                    <div class="flex-grow flex flex-wrap gap-3" id="tier-b-container">
+                        <!-- B Tier Guns rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cod-gold/20 bg-black/60 py-10 px-4 text-xs text-gray-400 font-mono">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="space-y-2 text-center md:text-left">
+                <div class="font-orbitron font-bold text-white text-base">CALL OF DUTY: MOBILE FAN HUB</div>
+                <p>本網站為粉絲社群交流專用，所有遊戲商標與相關視覺素材版權歸 Activision 及 Garena 所有。</p>
+            </div>
+            <div class="flex space-x-6 text-base">
+                <a href="#" class="hover:text-cod-gold transition"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-cod-gold transition"><i class="fa-brands fa-youtube"></i></a>
+                <a href="#" class="hover:text-cod-gold transition"><i class="fa-brands fa-discord"></i></a>
+                <a href="#" class="hover:text-cod-gold transition"><i class="fa-solid fa-globe"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive JavaScript Logic -->
+    <script>
+        /* -----------------------------------------------------------
+           1. AUDIO SYNTHESIZER (Tone.js inspired Web Audio API FX)
+        ----------------------------------------------------------- */
+        let sfxEnabled = true;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            const icon = document.getElementById('sfx-icon');
+            const btnText = document.querySelector('#sfx-toggle span');
+            if (sfxEnabled) {
+                icon.className = "fa-solid fa-volume-high text-cod-gold";
+                btnText.innerText = "SFX: ON";
+                playClickSound();
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-gray-500";
+                btnText.innerText = "SFX: OFF";
+            }
+        }
+
+        // Tactical Click Sound
+        function playClickSound() {
+            if (!sfxEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {}
+        }
+
+        // Scorestreak / Ultimate Audio Simulation Effect
+        function playScorestreakSound(type) {
+            if (!sfxEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                if (type === 'vtol') {
+                    // Heavy Alarm Synthesizer
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                } else if (type === 'predator') {
+                    // Missile Launch Whistle
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                } else {
+                    // Tactical Ping
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                }
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+
+        /* -----------------------------------------------------------
+           2. WEAPONS & GUNSMITH DATA AND ENGINE
+        ----------------------------------------------------------- */
+        const weaponsData = {
+            fennec: {
+                name: "Fennec",
+                type: "衝鋒槍 (SMG)",
+                desc: "極高射速的近距離霸主，擁有極強的爆發殺傷力與極佳機動性。",
+                base: { damage: 25, accuracy: 42, range: 40, firerate: 111, mobility: 88, control: 38 },
+                attachments: {
+                    muzzle: [
+                        { name: "無配件", stats: {} },
+                        { name: "單體制退器", stats: { range: 10, accuracy: 5, mobility: -5 } },
+                        { name: "輕型消音器", stats: { mobility: 5, range: -5 } }
+                    ],
+                    barrel: [
+                        { name: "無配件", stats: {} },
+                        { name: "ZLR 死神槍管", stats: { range: 15, control: 10, mobility: -8 } },
+                        { name: "MIP 輕型短槍管", stats: { mobility: 12, accuracy: -6 } }
+                    ],
+                    stock: [
+                        { name: "無配件", stats: {} },
+                        { name: "RTC 穩定槍托", stats: { accuracy: 8, control: 8, mobility: -6 } },
+                        { name: "無槍托", stats: { mobility: 15, accuracy: -8, control: -8 } }
+                    ],
+                    laser: [
+                        { name: "無配件", stats: {} },
+                        { name: "OWC 戰術雷射", stats: { accuracy: 7, mobility: 5 } },
+                        { name: "5mW 雷射", stats: { mobility: 8 } }
+                    ],
+                    perk: [
+                        { name: "無配件", stats: {} },
+                        { name: "雙持 (Akimbo)", stats: { firerate: 20, accuracy: -20, range: -10 } },
+                        { name: "快手 (Slight of Hand)", stats: { mobility: 5 } }
+                    ],
+                    ammo: [
+                        { name: "無配件", stats: {} },
+                        { name: "大容量擴充彈匣", stats: { control: 2, mobility: -3 } }
+                    ]
+                }
+            },
+            dlq33: {
+                name: "DL Q33",
+                nameType: "狙擊槍 (Sniper)",
+                type: "狙擊槍 (Sniper)",
+                desc: "經典老牌栓動式狙擊槍，一槍致命的極致精準代表。",
+                base: { damage: 90, accuracy: 68, range: 95, firerate: 28, mobility: 32, control: 30 },
+                attachments: {
+                    muzzle: [{ name: "無配件", stats: {} }, { name: "OWC 輕型消音器", stats: { range: 5 } }],
+                    barrel: [{ name: "無配件", stats: {} }, { name: "MIP 輕型槍管", stats: { mobility: 10, accuracy: -5 } }],
+                    stock: [{ name: "無配件", stats: {} }, { name: "OWC 骨架槍托", stats: { mobility: 8 } }],
+                    laser: [{ name: "無配件", stats: {} }, { name: "OWC 戰術雷射", stats: { accuracy: 6, mobility: 4 } }],
+                    perk: [{ name: "無配件", stats: {} }, { name: "穿透彈", stats: { damage: 10 } }],
+                    ammo: [{ name: "無配件", stats: {} }, { name: "鋁熱彈頭", stats: { damage: 15, firerate: -5 } }]
+                }
+            },
+            ak47: {
+                name: "AK-47",
+                type: "突擊步槍 (AR)",
+                desc: "擁有單發高傷害與中遠距離強大壓制力的步槍。",
+                base: { damage: 48, accuracy: 67, range: 58, firerate: 55, mobility: 68, control: 44 },
+                attachments: {
+                    muzzle: [{ name: "無配件", stats: {} }, { name: "OWC 補償器", stats: { control: 12 } }],
+                    barrel: [{ name: "無配件", stats: {} }, { name: "OWC 游俠槍管", stats: { range: 12, control: 8 } }],
+                    stock: [{ name: "無配件", stats: {} }, { name: "MIP 突擊槍托", stats: { accuracy: 6 } }],
+                    laser: [{ name: "無配件", stats: {} }, { name: "OWC 戰術雷射", stats: { accuracy: 5, mobility: 4 } }],
+                    perk: [{ name: "無配件", stats: {} }, { name: "禁用 Perk", stats: { control: 5 } }],
+                    ammo: [{ name: "無配件", stats: {} }, { name: "5.45 彈匣", stats: { firerate: 15, damage: -8 } }]
+                }
+            },
+            m4: {
+                name: "M4",
+                type: "突擊步槍 (AR)",
+                desc: "極高穩定度與彈道平穩的經典全能步槍，新手至高手的首選。",
+                base: { damage: 39, accuracy: 78, range: 58, firerate: 68, mobility: 72, control: 56 },
+                attachments: {
+                    muzzle: [{ name: "無配件", stats: {} }, { name: "單體消音器", stats: { range: 8 } }],
+                    barrel: [{ name: "無配件", stats: {} }, { name: "射手長槍管", stats: { range: 15, accuracy: 8 } }],
+                    stock: [{ name: "無配件", stats: {} }, { name: "無槍托", stats: { mobility: 12, control: -6 } }],
+                    laser: [{ name: "無配件", stats: {} }, { name: "OWC 戰術雷射", stats: { accuracy: 6 } }],
+                    perk: [{ name: "無配件", stats: {} }, { name: "快手", stats: { mobility: 4 } }],
+                    ammo: [{ name: "無配件", stats: {} }, { h: "50 發擴充彈匣", stats: { mobility: -4 } }]
+                }
+            }
+        };
+
+        let currentWeaponKey = 'fennec';
+        let currentSelectedAttachments = {
+            muzzle: 0,
+            barrel: 0,
+            stock: 0,
+            laser: 0,
+            perk: 0,
+            ammo: 0
+        };
+
+        let radarChartInstance = null;
+
+        // Initialize Gunsmith System
+        function initGunsmith() {
+            renderWeaponList();
+            loadWeapon('fennec');
+        }
+
+        function renderWeaponList() {
+            const listEl = document.getElementById('weapon-list');
+            listEl.innerHTML = '';
+
+            Object.keys(weaponsData).forEach(key => {
+                const w = weaponsData[key];
+                const btn = document.createElement('button');
+                btn.onclick = () => { playClickSound(); loadWeapon(key); };
+                btn.className = `w-full text-left p-3 rounded-lg border transition flex justify-between items-center ${key === currentWeaponKey ? 'glass-panel-active bg-cod-gold/10 text-white border-cod-gold' : 'glass-panel text-gray-300 border-cod-gold/20 hover:border-cod-gold/50'}`;
+                btn.innerHTML = `
+                    <div>
+                        <div class="font-orbitron font-bold text-sm">${w.name}</div>
+                        <div class="text-[10px] text-gray-400 font-mono">${w.type}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-cod-gold"></i>
+                `;
+                listEl.appendChild(btn);
+            });
+        }
+
+        function loadWeapon(key) {
+            currentWeaponKey = key;
+            currentSelectedAttachments = { muzzle: 0, barrel: 0, stock: 0, laser: 0, perk: 0, ammo: 0 };
+            
+            renderWeaponList();
+            updateGunsmithUI();
+        }
+
+        function updateGunsmithUI() {
+            const w = weaponsData[currentWeaponKey];
+            document.getElementById('gun-title').innerText = w.name;
+            document.getElementById('gun-type-badge').innerText = w.type;
+            document.getElementById('gun-desc').innerText = w.desc;
+
+            // Calculate Current Modified Stats
+            const currentStats = { ...w.base };
+            Object.keys(currentSelectedAttachments).forEach(slot => {
+                const index = currentSelectedAttachments[slot];
+                if (w.attachments[slot] && w.attachments[slot][index]) {
+                    const bonus = w.attachments[slot][index].stats;
+                    Object.keys(bonus).forEach(statKey => {
+                        if (currentStats[statKey] !== undefined) {
+                            currentStats[statKey] += bonus[statKey];
+                        }
+                    });
+                }
+            });
+
+            // Update DOM Stat Bars & Numbers
+            const keys = ['damage', 'accuracy', 'range', 'firerate', 'mobility', 'control'];
+            keys.forEach(k => {
+                const val = Math.max(0, Math.min(100, currentStats[k]));
+                document.getElementById(`stat-val-${k}`).innerText = val;
+                document.getElementById(`bar-${k}`).style.width = `${val}%`;
+            });
+
+            // Update Radar Chart
+            updateRadarChart(currentStats);
+
+            // Render Attachment Slot Dropdowns
+            renderAttachmentSlots(w);
+
+            // Update Share Code Text
+            document.getElementById('share-code').innerText = `COD-${w.name.substring(0,3).toUpperCase()}-${Math.floor(1000+Math.random()*9000)}-X`;
+        }
+
+        function renderAttachmentSlots(w) {
+            const container = document.getElementById('attachment-slots');
+            container.innerHTML = '';
+
+            const slotNames = {
+                muzzle: "槍口 (Muzzle)",
+                barrel: "槍管 (Barrel)",
+                stock: "槍托 (Stock)",
+                laser: "雷射 (Laser)",
+                perk: "被動技能 (Perk)",
+                ammo: "彈藥 (Ammunition)"
+            };
+
+            Object.keys(slotNames).forEach(slotKey => {
+                const slotBox = document.createElement('div');
+                slotBox.className = "space-y-1";
+
+                let optionsHtml = '';
+                if (w.attachments[slotKey]) {
+                    w.attachments[slotKey].forEach((att, idx) => {
+                        const selected = currentSelectedAttachments[slotKey] === idx ? 'selected' : '';
+                        optionsHtml += `<option value="${idx}" ${selected}>${att.name}</option>`;
+                    });
+                } else {
+                    optionsHtml = `<option value="0">預設無改裝</option>`;
+                }
+
+                slotBox.innerHTML = `
+                    <label class="text-[10px] text-gray-400 font-mono block">${slotNames[slotKey]}</label>
+                    <select onchange="changeAttachment('${slotKey}', this.value)" class="w-full bg-cod-card border border-cod-gold/30 text-white rounded px-2 py-1 text-xs font-mono focus:border-cod-gold outline-none">
+                        ${optionsHtml}
+                    </select>
+                `;
+                container.appendChild(slotBox);
+            });
+        }
+
+        function changeAttachment(slot, index) {
+            playClickSound();
+            currentSelectedAttachments[slot] = parseInt(index);
+            updateGunsmithUI();
+        }
+
+        function resetGunsmith() {
+            playClickSound();
+            currentSelectedAttachments = { muzzle: 0, barrel: 0, stock: 0, laser: 0, perk: 0, ammo: 0 };
+            updateGunsmithUI();
+        }
+
+        function updateRadarChart(stats) {
+            const ctx = document.getElementById('statsRadarChart').getContext('2d');
+            
+            const dataValues = [
+                stats.damage,
+                stats.accuracy,
+                stats.range,
+                stats.firerate,
+                stats.mobility,
+                stats.control
+            ];
+
+            if (radarChartInstance) {
+                radarChartInstance.data.datasets[0].data = dataValues;
+                radarChartInstance.update();
+            } else {
+                radarChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['傷害', '準確度', '射程', '射速', '機動性', '控制力'],
+                        datasets: [{
+                            label: '槍械性能數值',
+                            data: dataValues,
+                            backgroundColor: 'rgba(255, 199, 0, 0.25)',
+                            borderColor: '#FFC700',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#00E5FF',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(255, 255, 255, 0.15)' },
+                                grid: { color: 'rgba(255, 255, 255, 0.15)' },
+                                pointLabels: { color: '#E2E8F0', font: { size: 10, family: 'Noto Sans TC' } },
+                                ticks: { display: false, max: 100, min: 0 }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        function copyShareCode() {
+            playClickSound();
+            const code = document.getElementById('share-code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('button[onclick="copyShareCode()"] span');
+                btn.innerText = "已複製！";
+                setTimeout(() => { btn.innerText = "複製戰術碼"; }, 2000);
+            }).catch(() => {
+                alert("複製失敗");
+            });
+        }
+
+
+        /* -----------------------------------------------------------
+           3. MAPS DATABASE & RENDERING
+        ----------------------------------------------------------- */
+        const mapsData = [
+            { name: "核彈小鎮 (Nuketown)", mode: "MP", tags: ["TDM", "Hardpoint"], img: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?auto=format&fit=crop&w=600&q=80", tip: "近距離交火極為頻繁，善用兩側二樓窗戶掌控中央戰場。" },
+            { name: "雪山之巔 (Summit)", mode: "MP", tags: ["Search & Destroy", "Domination"], img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80", tip: "纜車與高空管道為強攻要道，建議配備煙霧彈推進。" },
+            { name: "墜機之地 (Crash)", mode: "MP", tags: ["S&D", "TDM"], img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80", tip: "天台樓是關鍵狙擊據點，佔領制高點可掌控周邊視線。" },
+            { name: "邊境孤島 (Isolated)", mode: "BR", tags: ["Battle Royale", "Squad"], img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80", tip: "廣闊的多地形地圖，包含雪山、沙漠與密集城區。" },
+            { name: "黑色域界 (Blackout)", mode: "BR", tags: ["Battle Royale", "Alcatraz"], img: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80", tip: "經典使命召喚生存大地圖，步調快速且資源豐富。" },
+            { name: "幻之城 (Vision City)", mode: "BR", tags: ["Cyber City", "BR Night"], img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80", tip: "高科技霓虹夜景城區，多層次建築極度考驗立體戰術。" }
+        ];
+
+        function renderMaps(filter = 'all') {
+            const container = document.getElementById('maps-grid');
+            container.innerHTML = '';
+
+            mapsData.forEach(m => {
+                if (filter !== 'all' && m.mode !== filter) return;
+
+                const card = document.createElement('div');
+                card.className = "glass-panel rounded-xl overflow-hidden border border-cod-gold/20 hover:border-cod-gold transition duration-300 group hud-box flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="relative h-44 overflow-hidden">
+                            <img src="${m.img}" alt="${m.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500 filter brightness-90">
+                            <div class="absolute top-3 left-3 bg-cod-gold text-black font-mono font-bold text-[10px] px-2 py-0.5 rounded">
+                                ${m.mode}
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-2">
+                            <h3 class="text-lg font-orbitron font-bold text-white group-hover:text-cod-gold transition">${m.name}</h3>
+                            <div class="flex flex-wrap gap-1">
+                                ${m.tags.map(t => `<span class="bg-cod-card px-2 py-0.5 rounded border border-gray-700 text-[10px] font-mono text-cod-accent">${t}</span>`).join('')}
+                            </div>
+                            <p class="text-xs text-gray-300 pt-2 font-sans border-t border-gray-800">
+                                <i class="fa-solid fa-lightbulb text-cod-gold mr-1"></i>${m.tip}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterMaps(category) {
+            playClickSound();
+            document.querySelectorAll('#map-filters button').forEach(b => {
+                b.className = "map-filter-btn px-3 py-1.5 rounded glass-panel text-gray-400";
+            });
+            event.target.className = "map-filter-btn px-3 py-1.5 rounded glass-panel text-cod-gold border-cod-gold";
+            renderMaps(category);
+        }
+
+
+        /* -----------------------------------------------------------
+           4. SCORESTREAKS & OPERATOR SKILLS DATA
+        ----------------------------------------------------------- */
+        const streaksData = [
+            { name: "VTOL 戰機", score: "1600 分", desc: "呼叫空中砲艇進行高空重火力打擊。", icon: "fa-jet-fighter", sfx: "vtol" },
+            { name: "掠奪者飛彈", score: "700 分", desc: "手動導引精準空對地飛彈襲擊敵方。", icon: "fa-rocket", sfx: "predator" },
+            { name: "隱形直升機", score: "1000 分", desc: "派遣無法被雷達偵測的武裝直升機。", icon: "fa-helicopter", sfx: "vtol" },
+            { name: "MQ-27 偵察無人機", score: "500 分", desc: "標記敵方位置並精準釋放爆破導彈。", icon: "fa-drone", sfx: "ping" }
+        ];
+
+        function renderStreaks() {
+            const container = document.getElementById('streaks-container');
+            container.innerHTML = '';
+
+            streaksData.forEach(item => {
+                const card = document.createElement('div');
+                card.onclick = () => { playScorestreakSound(item.sfx); };
+                card.className = "glass-panel p-5 rounded-xl border border-cod-gold/20 hover:border-cod-gold hover:bg-cod-gold/10 transition cursor-pointer group hud-box text-center space-y-3";
+                card.innerHTML = `
+                    <div class="w-14 h-14 mx-auto rounded-full bg-cod-gold/20 text-cod-gold flex items-center justify-center text-2xl group-hover:scale-110 transition border border-cod-gold/40">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-orbitron font-bold text-white group-hover:text-cod-gold transition">${item.name}</h4>
+                        <span class="text-[10px] font-mono text-cod-accent bg-cod-card px-2 py-0.5 rounded border border-cod-accent/30 inline-block mt-1">${item.score}</span>
+                    </div>
+                    <p class="text-xs text-gray-400">${item.desc}</p>
+                    <div class="text-[10px] font-mono text-cod-gold opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-play mr-1"></i>點擊觸發音效測試
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        /* -----------------------------------------------------------
+           5. META TIER LIST DATA
+        ----------------------------------------------------------- */
+        const tierData = {
+            S: [
+                { name: "Fennec", category: "SMG", note: "近戰近乎無敵" },
+                { name: "DL Q33", category: "SNIPER", note: "一槍架點神槍" },
+                { name: "CBR4", category: "SMG", note: "大彈匣彈道穩定" },
+                { name: "Holger 26", category: "LMG", note: "可機動改裝機槍" }
+            ],
+            A: [
+                { name: "AK-47", category: "AR", note: "高單發傷害" },
+                { name: "M4", category: "AR", note: "極致穩定好上手" },
+                { name: "KRM-262", category: "SHOTGUN", note: "近距離一槍死" },
+                { name: "Grau 5.56", category: "AR", note: "中遠程精準壓制" }
+            ],
+            B: [
+                { name: "RUS-79U", category: "SMG", note: "新手過渡好槍" },
+                { name: "Arctic .50", category: "SNIPER", note: "高連射狙擊" },
+                { name: "RPD", category: "LMG", note: "無限彈藥改件" }
+            ]
+        };
+
+        function renderTierList(filterCategory = 'ALL') {
+            ['S', 'A', 'B'].forEach(tier => {
+                const container = document.getElementById(`tier-${tier.toLowerCase()}-container`);
+                container.innerHTML = '';
+
+                const filtered = tierData[tier].filter(item => filterCategory === 'ALL' || item.category === filterCategory);
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<span class="text-xs font-mono text-gray-500">該類別無對應槍械</span>`;
+                    return;
+                }
+
+                filtered.forEach(gun => {
+                    const tag = document.createElement('div');
+                    tag.className = "bg-cod-card/90 px-3 py-2 rounded-lg border border-gray-700 flex items-center space-x-2 text-xs hover:border-cod-gold transition cursor-pointer";
+                    tag.onclick = () => {
+                        if (weaponsData[gun.name.toLowerCase().replace(/[^a-z0-9]/g, '')]) {
+                            loadWeapon(gun.name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                            window.location.href = '#gunsmith';
+                        }
+                    };
+                    tag.innerHTML = `
+                        <span class="font-orbitron font-bold text-white">${gun.name}</span>
+                        <span class="text-[9px] font-mono text-cod-accent bg-black/40 px-1.5 py-0.5 rounded">${gun.category}</span>
+                        <span class="text-[10px] text-gray-400 hidden sm:inline">(${gun.note})</span>
+                    `;
+                    container.appendChild(tag);
+                });
+            });
+        }
+
+        function filterTier(cat) {
+            playClickSound();
+            document.querySelectorAll('#tier-category-filters button').forEach(b => {
+                b.className = "tier-cat-btn px-3 py-1.5 rounded glass-panel text-gray-400";
+            });
+            event.target.className = "tier-cat-btn px-3 py-1.5 rounded glass-panel text-cod-gold border-cod-gold";
+            renderTierList(cat);
+        }
+
+
+        /* -----------------------------------------------------------
+           6. EVENT COUNTDOWN TIMER ENGINE
+        ----------------------------------------------------------- */
+        function startCountdown() {
+            let totalSeconds = (14 * 86400) + (8 * 3600) + (45 * 60) + 30;
+            setInterval(() => {
+                if (totalSeconds <= 0) return;
+                totalSeconds--;
+
+                const d = Math.floor(totalSeconds / 86400);
+                const h = Math.floor((totalSeconds % 86400) / 3600);
+                const m = Math.floor((totalSeconds % 3600) / 60);
+                const s = totalSeconds % 60;
+
+                document.getElementById('timer-days').innerText = String(d).padStart(2, '0');
+                document.getElementById('timer-hours').innerText = String(h).padStart(2, '0');
+                document.getElementById('timer-mins').innerText = String(m).padStart(2, '0');
+                document.getElementById('timer-secs').innerText = String(s).padStart(2, '0');
+            }, 1000);
+        }
+
+
+        /* -----------------------------------------------------------
+           7. PAGE INIT LOAD EVENT
+        ----------------------------------------------------------- */
+        window.onload = function() {
+            initGunsmith();
+            renderMaps('all');
+            renderStreaks();
+            renderTierList('ALL');
+            startCountdown();
+        };
+    </script>
+</body>
+</html>
